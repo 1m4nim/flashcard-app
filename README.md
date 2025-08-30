@@ -1,12 +1,32 @@
-# React + Vite
+# 単語帳アプリ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## プロジェクト概要
+このプロジェクトは、ReactとAnt Designを使って作成されたシンプルな単語帳Webアプリケーションです。単語と意味を登録・編集・削除できる基本的な機能に加え、登録した単語を使って学習できるクイズ機能が搭載されています。
 
-Currently, two official plugins are available:
+## 主な機能
+単語の登録・編集・削除: 自由に単語と意味を追加し、管理することができます。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+クイズ機能:
+登録した単語を使ってクイズに挑戦できます。
 
-## Expanding the ESLint configuration
+出題形式の変更: 単語から意味を答える形式と、意味から単語を答える形式を切り替えられます。
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+スコアの自動計算: 正解数と回答総数が自動的にカウントされます。
+
+最終結果表示: クイズを最後まで終えると、正答率を含む結果が表示されます。
+
+## 本日の開発内容
+以下の機能を追加・改善しました。
+
+クイズ機能の追加: 単語帳の単語をランダムに出題し、正解・不正解を判定する機能を実装しました。
+
+クイズ形式の変更: 単語 → 意味、または意味 → 単語の2つの形式を切り替えられるようにしました。これにより、様々な角度から学習できます。
+
+スコア表示とバグ修正: クイズ中にリアルタイムで正解数が表示されるようにしました。また、**「同じ単語が繰り返し出題される」「正解数がリセットされる」**といったバグを修正し、安定した動作を実現しました。
+
+クイズ最終結果の表示: すべての単語に回答し終えた後、総合的な正答率を含む最終結果が表示されるようにしました。
+
+## 今後の展望
+ローカルストレージへのデータ保存機能
+
+学習進捗の可視化機能
