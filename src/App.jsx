@@ -19,6 +19,12 @@ const App = () => {
   const [quizAnswer, setQuizAnswer] = useState('');
 
   const [isReverseQuiz, setIsReverseQuiz] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [answeredWords, setAnsweredWords] = useState([]);
+
+  // New state for quiz completion
+  const [hasFinishedQuiz, setHasFinishedQuiz] = useState(false);
 
   const addWord = () => {
     if (newWord.trim() === '' || newTranslation.trim() === '') {
@@ -88,6 +94,10 @@ const App = () => {
       return;
     }
     setIsQuizMode(true);
+    setCorrectCount(0);
+    setTotalCount(0);
+    setHasFinishedQuiz(false); // Reset quiz finished state
+    setAnsweredWords([]); // Reset answered words
     const randomIndex = Math.floor(Math.random() * words.length);
     setCurrentQuizWord(words[randomIndex]);
   };
@@ -96,17 +106,33 @@ const App = () => {
     setIsQuizMode(false);
     setCurrentQuizWord(null);
     setQuizAnswer('');
+    setHasFinishedQuiz(false); // Reset quiz finished state
   };
 
   const checkAnswer = () => {
     const correctAnswer = isReverseQuiz ? currentQuizWord.text : currentQuizWord.translation;
-    if (quizAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase()) {
+    const isCorrect = quizAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+
+    setTotalCount(prev => prev + 1);
+
+    if (isCorrect) {
       message.success('正解です！');
+      setCorrectCount(prev => prev + 1);
     } else {
       message.error(`不正解です。正解は "${correctAnswer}" です。`);
     }
-    setQuizAnswer('');
-    startQuiz();
+
+    setAnsweredWords(prev => [...prev, currentQuizWord.id]);
+
+    const remainingWords = words.filter(word => !answeredWords.includes(word.id) && word.id !== currentQuizWord.id);
+
+    if (remainingWords.length === 0) {
+      setHasFinishedQuiz(true);
+    } else {
+      const randomIndex = Math.floor(Math.random() * remainingWords.length);
+      setCurrentQuizWord(remainingWords[randomIndex]);
+      setQuizAnswer('');
+    }
   };
 
   return (
@@ -169,20 +195,32 @@ const App = () => {
               />
             </>
           ) : (
-            currentQuizWord && (
+            hasFinishedQuiz ? (
               <Card style={{ textAlign: 'center' }}>
-                <Typography.Title level={4}>
-                  {isReverseQuiz ? currentQuizWord.translation : currentQuizWord.text}
-                </Typography.Title>
-                <Input
-                  value={quizAnswer}
-                  onChange={(e) => setQuizAnswer(e.target.value)}
-                  placeholder="答えを入力してください"
-                  onPressEnter={checkAnswer}
-                  style={{ marginBottom: '16px' }}
-                />
-                <Button type="primary" onClick={checkAnswer}>回答</Button>
+                <Typography.Title level={4}>クイズ結果</Typography.Title>
+                <p>正解数: {correctCount} / {totalCount}</p>
+                <p>正答率: {totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(2) : 0}%</p>
+                <Button type="primary" onClick={startQuiz}>もう一度挑戦</Button>
               </Card>
+            ) : (
+              currentQuizWord && (
+                <Card style={{ textAlign: 'center' }}>
+                  <Typography.Title level={4}>
+                    {isReverseQuiz ? currentQuizWord.translation : currentQuizWord.text}
+                  </Typography.Title>
+                  <Input
+                    value={quizAnswer}
+                    onChange={(e) => setQuizAnswer(e.target.value)}
+                    placeholder="答えを入力してください"
+                    onPressEnter={checkAnswer}
+                    style={{ marginBottom: '16px' }}
+                  />
+                  <Button type="primary" onClick={checkAnswer}>回答</Button>
+                  <div style={{ marginTop: '16px' }}>
+                    <Text type="secondary">正解数: {correctCount} / {totalCount}</Text>
+                  </div>
+                </Card>
+              )
             )
           )}
         </Card>
