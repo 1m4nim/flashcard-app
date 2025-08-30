@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Input, List, Card, Typography, Space, message, Layout, Modal } from 'antd';
-import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, SwapOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
@@ -13,11 +13,12 @@ const App = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [wordToDeleteId, setWordToDeleteId] = useState(null);
-  
-  // New state for quiz functionality
+
   const [isQuizMode, setIsQuizMode] = useState(false);
   const [currentQuizWord, setCurrentQuizWord] = useState(null);
   const [quizAnswer, setQuizAnswer] = useState('');
+
+  const [isReverseQuiz, setIsReverseQuiz] = useState(false);
 
   const addWord = () => {
     if (newWord.trim() === '' || newTranslation.trim() === '') {
@@ -81,7 +82,6 @@ const App = () => {
     setWordToDeleteId(null);
   };
 
-  // Quiz start function
   const startQuiz = () => {
     if (words.length === 0) {
       message.warn('単語がありません。追加してください。');
@@ -92,22 +92,21 @@ const App = () => {
     setCurrentQuizWord(words[randomIndex]);
   };
 
-  // Quiz end function
   const endQuiz = () => {
     setIsQuizMode(false);
     setCurrentQuizWord(null);
     setQuizAnswer('');
   };
 
-  // Check answer function
   const checkAnswer = () => {
-    if (quizAnswer.trim().toLowerCase() === currentQuizWord.translation.trim().toLowerCase()) {
+    const correctAnswer = isReverseQuiz ? currentQuizWord.text : currentQuizWord.translation;
+    if (quizAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase()) {
       message.success('正解です！');
     } else {
-      message.error(`不正解です。正解は "${currentQuizWord.translation}" です。`);
+      message.error(`不正解です。正解は "${correctAnswer}" です。`);
     }
     setQuizAnswer('');
-    startQuiz(); // Move to the next question
+    startQuiz();
   };
 
   return (
@@ -116,7 +115,7 @@ const App = () => {
         <Typography.Title level={2} style={{ margin: 0 }}>単語帳アプリ</Typography.Title>
       </Header>
       <Content style={{ padding: '24px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-        <Card style={{ width: '100%', maxWidth: 800, borderRadius: '8px' }}>
+        <Card style={{ minWidth: 500, maxWidth: 800, width: '100%', borderRadius: '8px' }}>
           <div style={{ marginBottom: '20px', textAlign: 'right' }}>
             {!isQuizMode ? (
               <Button
@@ -127,9 +126,14 @@ const App = () => {
                 クイズ開始
               </Button>
             ) : (
-              <Button type="default" onClick={endQuiz}>
-                クイズ終了
-              </Button>
+              <Space>
+                <Button type="default" icon={<SwapOutlined />} onClick={() => setIsReverseQuiz(!isReverseQuiz)}>
+                  形式変更
+                </Button>
+                <Button type="default" onClick={endQuiz}>
+                  クイズ終了
+                </Button>
+              </Space>
             )}
           </div>
 
@@ -167,7 +171,9 @@ const App = () => {
           ) : (
             currentQuizWord && (
               <Card style={{ textAlign: 'center' }}>
-                <Typography.Title level={4}>{currentQuizWord.text}</Typography.Title>
+                <Typography.Title level={4}>
+                  {isReverseQuiz ? currentQuizWord.translation : currentQuizWord.text}
+                </Typography.Title>
                 <Input
                   value={quizAnswer}
                   onChange={(e) => setQuizAnswer(e.target.value)}
