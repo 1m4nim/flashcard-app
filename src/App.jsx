@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Input, List, Card, Typography, Space, message, Layout, Modal } from 'antd';
-import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined, QuestionCircleOutlined, SwapOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, QuestionCircleOutlined, SwapOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
@@ -13,29 +13,48 @@ const App = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [wordToDeleteId, setWordToDeleteId] = useState(null);
-
   const [isQuizMode, setIsQuizMode] = useState(false);
   const [currentQuizWord, setCurrentQuizWord] = useState(null);
   const [quizAnswer, setQuizAnswer] = useState('');
-
   const [isReverseQuiz, setIsReverseQuiz] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [answeredWords, setAnsweredWords] = useState([]);
-
-  // New state for quiz completion
   const [hasFinishedQuiz, setHasFinishedQuiz] = useState(false);
+  const [answeredWordIds, setAnsweredWordIds] = useState(new Set());
+
+  // 初回ロード時に localStorage から単語を取得
+  useEffect(() => {
+    try {
+      const storedWords = localStorage.getItem('flashcardWords');
+      if (storedWords) {
+        setWords(JSON.parse(storedWords));
+        console.log("Loaded words from localStorage:", JSON.parse(storedWords));
+      }
+    } catch (error) {
+      console.error('Failed to load words from local storage', error);
+    }
+  }, []);
+
+  // words が更新されたら localStorage に保存
+  useEffect(() => {
+    try {
+      // 空配列のときは保存をスキップ
+      if (words.length === 0) return;
+
+      localStorage.setItem('flashcardWords', JSON.stringify(words));
+      console.log("Saved words:", words);
+      console.log("Saved value:", JSON.parse(localStorage.getItem('flashcardWords')));
+    } catch (error) {
+      console.error('Failed to save words to local storage', error);
+    }
+  }, [words]);
 
   const addWord = () => {
-    if (newWord.trim() === '' || newTranslation.trim() === '') {
+    if (!newWord.trim() || !newTranslation.trim()) {
       message.error('単語と意味を入力してください。');
       return;
     }
-    const newEntry = {
-      id: Date.now(),
-      text: newWord.trim(),
-      translation: newTranslation.trim(),
-    };
+    const newEntry = { id: Date.now(), text: newWord.trim(), translation: newTranslation.trim() };
     setWords([...words, newEntry]);
     setNewWord('');
     setNewTranslation('');
@@ -50,7 +69,7 @@ const App = () => {
   };
 
   const handleEdit = () => {
-    if (newWord.trim() === '' || newTranslation.trim() === '') {
+    if (!newWord.trim() || !newTranslation.trim()) {
       message.error('単語と意味を入力してください。');
       return;
     }
@@ -96,17 +115,16 @@ const App = () => {
     setIsQuizMode(true);
     setCorrectCount(0);
     setTotalCount(0);
-    setHasFinishedQuiz(false); // Reset quiz finished state
-    setAnsweredWords([]); // Reset answered words
-    const randomIndex = Math.floor(Math.random() * words.length);
-    setCurrentQuizWord(words[randomIndex]);
+    setHasFinishedQuiz(false);
+    setAnsweredWordIds(new Set());
+    setCurrentQuizWord(words[0]);
   };
 
   const endQuiz = () => {
     setIsQuizMode(false);
     setCurrentQuizWord(null);
     setQuizAnswer('');
-    setHasFinishedQuiz(false); // Reset quiz finished state
+    setHasFinishedQuiz(false);
   };
 
   const checkAnswer = () => {
@@ -114,51 +132,30 @@ const App = () => {
     const isCorrect = quizAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
 
     setTotalCount(prev => prev + 1);
+    if (isCorrect) setCorrectCount(prev => prev + 1);
 
-    if (isCorrect) {
-      message.success('正解です！');
-      setCorrectCount(prev => prev + 1);
-    } else {
-      message.error(`不正解です。正解は "${correctAnswer}" です。`);
-    }
+    setAnsweredWordIds(prev => new Set(prev.add(currentQuizWord.id)));
+    setQuizAnswer('');
 
-    setAnsweredWords(prev => [...prev, currentQuizWord.id]);
-
-    const remainingWords = words.filter(word => !answeredWords.includes(word.id) && word.id !== currentQuizWord.id);
-
-    if (remainingWords.length === 0) {
-      setHasFinishedQuiz(true);
-    } else {
-      const randomIndex = Math.floor(Math.random() * remainingWords.length);
-      setCurrentQuizWord(remainingWords[randomIndex]);
-      setQuizAnswer('');
-    }
+    const unansweredWords = words.filter(word => !answeredWordIds.has(word.id) && word.id !== currentQuizWord.id);
+    if (unansweredWords.length === 0) setHasFinishedQuiz(true);
+    else setCurrentQuizWord(unansweredWords[Math.floor(Math.random() * unansweredWords.length)]);
   };
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <Header style={{ backgroundColor: '#fff', textAlign: 'center', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
+      <Header style={{ backgroundColor: '#fff', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <Typography.Title level={2} style={{ margin: 0 }}>単語帳アプリ</Typography.Title>
       </Header>
       <Content style={{ padding: '24px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
         <Card style={{ minWidth: 500, maxWidth: 800, width: '100%', borderRadius: '8px' }}>
           <div style={{ marginBottom: '20px', textAlign: 'right' }}>
             {!isQuizMode ? (
-              <Button
-                type="primary"
-                icon={<QuestionCircleOutlined />}
-                onClick={startQuiz}
-              >
-                クイズ開始
-              </Button>
+              <Button type="primary" icon={<QuestionCircleOutlined />} onClick={startQuiz}>クイズ開始</Button>
             ) : (
               <Space>
-                <Button type="default" icon={<SwapOutlined />} onClick={() => setIsReverseQuiz(!isReverseQuiz)}>
-                  形式変更
-                </Button>
-                <Button type="default" onClick={endQuiz}>
-                  クイズ終了
-                </Button>
+                <Button type="default" icon={<SwapOutlined />} onClick={() => setIsReverseQuiz(!isReverseQuiz)}>形式変更</Button>
+                <Button type="default" onClick={endQuiz}>クイズ終了</Button>
               </Space>
             )}
           </div>
@@ -166,16 +163,8 @@ const App = () => {
           {!isQuizMode ? (
             <>
               <Space.Compact style={{ width: '100%', marginBottom: '20px' }}>
-                <Input
-                  value={newWord}
-                  onChange={(e) => setNewWord(e.target.value)}
-                  placeholder="新しい単語"
-                />
-                <Input
-                  value={newTranslation}
-                  onChange={(e) => setNewTranslation(e.target.value)}
-                  placeholder="意味"
-                />
+                <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="新しい単語" />
+                <Input value={newTranslation} onChange={e => setNewTranslation(e.target.value)} placeholder="意味" />
                 <Button type="primary" onClick={addWord}>追加</Button>
               </Space.Compact>
               <List
@@ -210,14 +199,14 @@ const App = () => {
                   </Typography.Title>
                   <Input
                     value={quizAnswer}
-                    onChange={(e) => setQuizAnswer(e.target.value)}
+                    onChange={e => setQuizAnswer(e.target.value)}
                     placeholder="答えを入力してください"
                     onPressEnter={checkAnswer}
                     style={{ marginBottom: '16px' }}
                   />
                   <Button type="primary" onClick={checkAnswer}>回答</Button>
                   <div style={{ marginTop: '16px' }}>
-                    <Text type="secondary">正解数: {correctCount} / {totalCount}</Text>
+                    <Text type="secondary">正解数: {correctCount} / {words.length}</Text>
                   </div>
                 </Card>
               )
@@ -226,31 +215,12 @@ const App = () => {
         </Card>
       </Content>
 
-      <Modal
-        title="単語の編集"
-        open={isEditModalOpen}
-        onOk={handleEdit}
-        onCancel={handleEditCancel}
-      >
-        <Input
-          value={newWord}
-          onChange={(e) => setNewWord(e.target.value)}
-          placeholder="単語"
-          style={{ marginBottom: '16px' }}
-        />
-        <Input
-          value={newTranslation}
-          onChange={(e) => setNewTranslation(e.target.value)}
-          placeholder="意味"
-        />
+      <Modal title="単語の編集" open={isEditModalOpen} onOk={handleEdit} onCancel={handleEditCancel}>
+        <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="単語" style={{ marginBottom: '16px' }} />
+        <Input value={newTranslation} onChange={e => setNewTranslation(e.target.value)} placeholder="意味" />
       </Modal>
 
-      <Modal
-        title="単語の削除"
-        open={isDeleteModalOpen}
-        onOk={handleDelete}
-        onCancel={handleDeleteCancel}
-      >
+      <Modal title="単語の削除" open={isDeleteModalOpen} onOk={handleDelete} onCancel={handleDeleteCancel}>
         <p>本当にこの単語を削除しますか？</p>
       </Modal>
     </Layout>
