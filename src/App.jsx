@@ -4,14 +4,15 @@ import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-de
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
-const { confirm } = Modal;
 
 const App = () => {
   const [words, setWords] = useState([]);
   const [newWord, setNewWord] = useState('');
   const [newTranslation, setNewTranslation] = useState('');
   const [editId, setEditId] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [wordToDeleteId, setWordToDeleteId] = useState(null);
 
   const addWord = () => {
     if (newWord.trim() === '' || newTranslation.trim() === '') {
@@ -29,23 +30,11 @@ const App = () => {
     message.success('単語を追加しました。');
   };
 
-  const removeWord = (id) => {
-    confirm({
-      title: 'この単語を削除しますか？',
-      icon: <ExclamationCircleOutlined />,
-      content: 'この操作は元に戻せません。',
-      onOk() {
-        setWords(words.filter(word => word.id !== id));
-        message.success('単語を削除しました。');
-      },
-    });
-  };
-
   const showEditModal = (id, text, translation) => {
     setEditId(id);
     setNewWord(text);
     setNewTranslation(translation);
-    setIsModalVisible(true);
+    setIsEditModalOpen(true);
   };
 
   const handleEdit = () => {
@@ -56,18 +45,35 @@ const App = () => {
     setWords(words.map(word =>
       word.id === editId ? { ...word, text: newWord.trim(), translation: newTranslation.trim() } : word
     ));
-    setIsModalVisible(false);
+    setIsEditModalOpen(false);
     setEditId(null);
     setNewWord('');
     setNewTranslation('');
     message.success('単語を編集しました。');
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  const handleEditCancel = () => {
+    setIsEditModalOpen(false);
     setEditId(null);
     setNewWord('');
     setNewTranslation('');
+  };
+
+  const showDeleteConfirm = (id) => {
+    setWordToDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = () => {
+    setWords(words.filter(word => word.id !== wordToDeleteId));
+    setIsDeleteModalOpen(false);
+    setWordToDeleteId(null);
+    message.success('単語を削除しました。');
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setWordToDeleteId(null);
   };
 
   return (
@@ -98,7 +104,7 @@ const App = () => {
               <List.Item
                 actions={[
                   <Button type="text" icon={<EditOutlined />} onClick={() => showEditModal(item.id, item.text, item.translation)} />,
-                  <Button type="text" icon={<DeleteOutlined />} onClick={() => removeWord(item.id)} />,
+                  <Button type="text" icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(item.id)} />,
                 ]}
               >
                 <Text strong>{item.text}</Text>: <Text>{item.translation}</Text>
@@ -110,9 +116,9 @@ const App = () => {
 
       <Modal
         title="単語の編集"
-        visible={isModalVisible}
+        open={isEditModalOpen}
         onOk={handleEdit}
-        onCancel={handleCancel}
+        onCancel={handleEditCancel}
       >
         <Input
           value={newWord}
@@ -125,6 +131,15 @@ const App = () => {
           onChange={(e) => setNewTranslation(e.target.value)}
           placeholder="意味"
         />
+      </Modal>
+
+      <Modal
+        title="単語の削除"
+        open={isDeleteModalOpen}
+        onOk={handleDelete}
+        onCancel={handleDeleteCancel}
+      >
+        <p>本当にこの単語を削除しますか？</p>
       </Modal>
     </Layout>
   );
