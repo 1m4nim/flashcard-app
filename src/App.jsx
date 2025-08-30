@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Input, List, Card, Typography, Space, message, Layout, Modal } from 'antd';
+import { Button, Input, List, Card, Typography, Space, message, Layout, Modal, Grid } from 'antd';
 import { DeleteOutlined, EditOutlined, QuestionCircleOutlined, SwapOutlined } from '@ant-design/icons';
+import './App.css'; // このCSSファイルを追加します
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
+const { useBreakpoint } = Grid;
 
 const App = () => {
+  const screens = useBreakpoint();
+  const isMobile = screens.xs;
+
   const [words, setWords] = useState([]);
   const [newWord, setNewWord] = useState('');
   const [newTranslation, setNewTranslation] = useState('');
@@ -22,28 +27,21 @@ const App = () => {
   const [hasFinishedQuiz, setHasFinishedQuiz] = useState(false);
   const [answeredWordIds, setAnsweredWordIds] = useState(new Set());
 
-  // 初回ロード時に localStorage から単語を取得
   useEffect(() => {
     try {
       const storedWords = localStorage.getItem('flashcardWords');
       if (storedWords) {
         setWords(JSON.parse(storedWords));
-        console.log("Loaded words from localStorage:", JSON.parse(storedWords));
       }
     } catch (error) {
       console.error('Failed to load words from local storage', error);
     }
   }, []);
 
-  // words が更新されたら localStorage に保存
   useEffect(() => {
     try {
-      // 空配列のときは保存をスキップ
       if (words.length === 0) return;
-
       localStorage.setItem('flashcardWords', JSON.stringify(words));
-      console.log("Saved words:", words);
-      console.log("Saved value:", JSON.parse(localStorage.getItem('flashcardWords')));
     } catch (error) {
       console.error('Failed to save words to local storage', error);
     }
@@ -143,17 +141,17 @@ const App = () => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      <Header style={{ backgroundColor: '#fff', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <Typography.Title level={2} style={{ margin: 0 }}>単語帳アプリ</Typography.Title>
+    <Layout className="app-layout">
+      <Header className="app-header">
+        <Typography.Title level={isMobile ? 3 : 2} className="app-title">単語帳アプリ</Typography.Title>
       </Header>
-      <Content style={{ padding: '24px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-        <Card style={{ minWidth: 500, maxWidth: 800, width: '100%', borderRadius: '8px' }}>
-          <div style={{ marginBottom: '20px', textAlign: 'right' }}>
+      <Content className="app-content">
+        <Card className="app-card">
+          <div className="quiz-controls">
             {!isQuizMode ? (
               <Button type="primary" icon={<QuestionCircleOutlined />} onClick={startQuiz}>クイズ開始</Button>
             ) : (
-              <Space>
+              <Space direction={isMobile ? "vertical" : "horizontal"}>
                 <Button type="default" icon={<SwapOutlined />} onClick={() => setIsReverseQuiz(!isReverseQuiz)}>形式変更</Button>
                 <Button type="default" onClick={endQuiz}>クイズ終了</Button>
               </Space>
@@ -162,7 +160,7 @@ const App = () => {
 
           {!isQuizMode ? (
             <>
-              <Space.Compact style={{ width: '100%', marginBottom: '20px' }}>
+              <Space.Compact direction={isMobile ? "vertical" : "horizontal"} style={{ width: '100%', marginBottom: '20px' }}>
                 <Input value={newWord} onChange={e => setNewWord(e.target.value)} placeholder="新しい単語" />
                 <Input value={newTranslation} onChange={e => setNewTranslation(e.target.value)} placeholder="意味" />
                 <Button type="primary" onClick={addWord}>追加</Button>

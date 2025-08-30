@@ -40,3 +40,48 @@
 .read-the-docs {
   color: #888;
 }
+
+.app-layout {
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.app-header {
+  background-color: #fff;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0 16px; 
+}
+
+.app-title {
+  margin: 0;
+  padding: 16px 0; 
+}
+
+.app-content {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.app-card {
+  width: 100%;
+  max-width: 800px;
+  border-radius: 8px;
+}
+
+/* スマホ用のスタイル*/
+@media (max-width: 575.98px) {
+  .app-content {
+    padding: 16px;
+  }
+
+  .quiz-controls {
+    text-align: left; 
+  }
+}
+
+.ant-space-compact-vertical > .ant-space-item {
+  width: 100%;
+}
