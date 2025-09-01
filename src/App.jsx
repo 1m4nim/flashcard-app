@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Input, List, Card, Typography, Space, message, Layout, Modal, Grid } from 'antd';
 import { DeleteOutlined, EditOutlined, QuestionCircleOutlined, SwapOutlined } from '@ant-design/icons';
-import './App.css'; // このCSSファイルを追加します
+import './App.css'; 
 
 const { Header, Content } = Layout;
 const { Text } = Typography;
